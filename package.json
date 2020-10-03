@@ -1,0 +1,16 @@
+{
+  "name": "markdownlint-analyze-config",
+  "version": "0.0.1",
+  "description": "Code to analyze markdownlint config in the wild",
+  "main": "index.js",
+  "scripts": {
+    "test": "node index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/DavidAnson/markdownlint-analyze-config.git"
+  },
+  "author": "David Anson (https://dlaa.me/)",
+  "license": "MIT",
+  "private": true
+}
