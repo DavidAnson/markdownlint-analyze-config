@@ -12,5 +12,9 @@
   },
   "author": "David Anson (https://dlaa.me/)",
   "license": "MIT",
-  "private": true
+  "private": true,
+  "devDependencies": {
+    "markdownlint": "~0.21.0",
+    "node-fetch": "~2.6.1"
+  }
 }
