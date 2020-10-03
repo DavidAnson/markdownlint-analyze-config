@@ -2,4 +2,6 @@
 
 "use strict";
 
-console.log("TBD");
+const repos = require("./repos");
+
+console.dir(repos);
