@@ -3,6 +3,7 @@
 const fs = require("fs").promises;
 const path = require("path");
 const fetch = require("node-fetch");
+const yaml = require("yaml");
 const rules = require("./node_modules/markdownlint/lib/rules");
 const repos = require("./repos");
 
@@ -41,32 +42,42 @@ for (const { names, tags } of rules) {
     const cacheFile = path.join(cacheDir, `${org}.${repo}.json`);
     if (!await exists(cacheFile)) {
       console.log(`Downloading ${org}/${repo}...`);
-      const url = `https://raw.githubusercontent.com/${org}/${repo}/master/.markdownlint.json`;
-      const response = await fetch(url);
-      if (!response.ok) throw new Error(`Not ok response: ${url}`);
+      let url = `https://raw.githubusercontent.com/${org}/${repo}/master/.markdownlint.json`;
+      let response = await fetch(url);
+      if (!response.ok) {
+        url = `https://raw.githubusercontent.com/${org}/${repo}/master/.markdownlint.yaml`;
+        response = await fetch(url);
+      }
+      if (!response.ok) throw new Error(`Not ok response (${response.status}): ${url}`);
       const text = await response.text();
       await fs.writeFile(cacheFile, text);
     }
     console.log(`Parsing ${org}/${repo}...`);
     const text = await fs.readFile(cacheFile, "utf8");
-    const json = {
+    let configParsed = null;
+    try {
+      configParsed = JSON.parse(text);
+    } catch {
+      configParsed = yaml.parse(text);
+    }
+    const configEffective = {
       "default": true,
       "MD002": false,
       "MD006": false,
-      ...JSON.parse(text)
+      ...configParsed
     };
-    const config = {};
+    const configSimplified = {};
     for (const name of Object.values(ruleNames)) {
-      config[name] = json.default;
+      configSimplified[name] = configEffective.default;
     }
-    for (const [ name, value ] of Object.entries(json)) {
+    for (const [ name, value ] of Object.entries(configEffective)) {
       const rule = ruleNames[name] || tagNames[name];
       if (!rule) throw new Error(`Unknown rule/tag: ${name}`);
       for (const r of (Array.isArray(rule) ? rule : [ rule ])) {
-        config[r] = Boolean(value);
+        configSimplified[r] = Boolean(value);
       }
     }
-    delete config.default;
-    console.dir(config);
+    delete configSimplified.default;
+    console.dir(configSimplified);
   }
 })();

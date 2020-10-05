@@ -15,6 +15,7 @@
   "private": true,
   "devDependencies": {
     "markdownlint": "~0.21.0",
-    "node-fetch": "~2.6.1"
+    "node-fetch": "~2.6.1",
+    "yaml": "~1.10.0"
   }
 }
