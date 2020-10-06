@@ -7,6 +7,13 @@ const yaml = require("yaml");
 const rules = require("./node_modules/markdownlint/lib/rules");
 const repos = require("./repos");
 
+const urlPaths = [
+  "master/.markdownlint.json",
+  "master/.markdownlint.yaml",
+  "main/.markdownlint.json",
+  "devel/.markdownlint.json"
+];
+
 const exists = async (path) => {
   try {
     await fs.access(path);
@@ -42,11 +49,14 @@ for (const { names, tags } of rules) {
     const cacheFile = path.join(cacheDir, `${org}.${repo}.json`);
     if (!await exists(cacheFile)) {
       console.log(`Downloading ${org}/${repo}...`);
-      let url = `https://raw.githubusercontent.com/${org}/${repo}/master/.markdownlint.json`;
-      let response = await fetch(url);
-      if (!response.ok) {
-        url = `https://raw.githubusercontent.com/${org}/${repo}/master/.markdownlint.yaml`;
+      let url = null;
+      let response = null;
+      for (const urlPath of urlPaths) {
+        url = `https://raw.githubusercontent.com/${org}/${repo}/${urlPath}`;
         response = await fetch(url);
+        if (response.ok) {
+          break;
+        }
       }
       if (!response.ok) throw new Error(`Not ok response (${response.status}): ${url}`);
       const text = await response.text();
@@ -60,6 +70,7 @@ for (const { names, tags } of rules) {
     } catch {
       configParsed = yaml.parse(text);
     }
+    delete configParsed.resultVersion;
     const configEffective = {
       "default": true,
       "MD002": false,

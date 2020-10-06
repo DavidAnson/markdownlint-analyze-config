@@ -3,7 +3,7 @@
 "use strict";
 
 /*
-100 most popular repositories with markdownlint config according to the
+Most popular repositories with markdownlint config according to the
 following query run on https://console.cloud.google.com/bigquery.
 
 SELECT files.repo_name
@@ -78,7 +78,6 @@ IGS/OSDF
 PowerShell/xTimeZone
 victor73/OSDF
 DavidAnson/vscode-markdownlint
-Arturas-K/xSQLServer
 armbrustlab/seaflowpy
 `;
 
