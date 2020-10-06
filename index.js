@@ -23,24 +23,29 @@ const exists = async (path) => {
   }
 }
 
-const ruleNames = {
+const canonicalRule = {
   "default": "default"
 };
-const tagNames = {};
+const tagRules = {};
 for (const { names, tags } of rules) {
   const base = names.join("/");
   for (const name of names) {
-    ruleNames[name] = base;
+    canonicalRule[name] = base;
   }
   for (const tag of tags) {
-    tagNames[tag] = [
-      ...(tagNames[tag] || []),
+    tagRules[tag] = [
+      ...(tagRules[tag] || []),
       base
     ];
   }
 }
+const canonicalRuleSet = new Set(Object.values(canonicalRule));
+canonicalRuleSet.delete("default");
+const canonicalRules = [ ...canonicalRuleSet ];
+canonicalRules.sort();
 
 (async() => {
+  const csvLines = [];
   const cacheDir = path.join(__dirname, "cache");
   if (!await exists(cacheDir)) {
     await fs.mkdir(cacheDir);
@@ -60,7 +65,7 @@ for (const { names, tags } of rules) {
       }
       if (!response.ok) throw new Error(`Not ok response (${response.status}): ${url}`);
       const text = await response.text();
-      await fs.writeFile(cacheFile, text);
+      await fs.writeFile(cacheFile, text, "utf8");
     }
     console.log(`Parsing ${org}/${repo}...`);
     const text = await fs.readFile(cacheFile, "utf8");
@@ -78,17 +83,28 @@ for (const { names, tags } of rules) {
       ...configParsed
     };
     const configSimplified = {};
-    for (const name of Object.values(ruleNames)) {
+    for (const name of canonicalRules) {
       configSimplified[name] = configEffective.default;
     }
     for (const [ name, value ] of Object.entries(configEffective)) {
-      const rule = ruleNames[name] || tagNames[name];
+      const rule = canonicalRule[name] || tagRules[name];
+      if (rule === "default") continue;
       if (!rule) throw new Error(`Unknown rule/tag: ${name}`);
       for (const r of (Array.isArray(rule) ? rule : [ rule ])) {
         configSimplified[r] = Boolean(value);
       }
     }
-    delete configSimplified.default;
-    console.dir(configSimplified);
+    // console.dir(configSimplified);
+    const row = [ `${org}/${repo}` ];
+    for (const name of canonicalRules) {
+      row.push(configSimplified[name] ? 1 : 0);
+    }
+    csvLines.push(row.join(","));
   }
+  const headings = [
+    "Org/Repo",
+    ...canonicalRules
+  ];
+  csvLines.unshift(headings.join(","));
+  await fs.writeFile(path.join(cacheDir, "analyze-config.csv"), csvLines.join("\n"), "utf8");
 })();
