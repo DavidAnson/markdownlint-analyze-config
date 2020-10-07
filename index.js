@@ -94,7 +94,7 @@ canonicalRules.sort();
         configSimplified[r] = Boolean(value);
       }
     }
-    // console.dir(configSimplified);
+    console.dir(configSimplified);
     const row = [ `${org}/${repo}` ];
     for (const name of canonicalRules) {
       row.push(configSimplified[name] ? 1 : 0);
@@ -106,5 +106,5 @@ canonicalRules.sort();
     ...canonicalRules
   ];
   csvLines.unshift(headings.join(","));
-  await fs.writeFile(path.join(cacheDir, "analyze-config.csv"), csvLines.join("\n"), "utf8");
+  await fs.writeFile(path.join(__dirname, "analyze-config.csv"), csvLines.join("\n"), "utf8");
 })();
